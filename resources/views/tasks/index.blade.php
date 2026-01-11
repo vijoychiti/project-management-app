@@ -11,29 +11,95 @@
         </div>
     </div>
 
+    <div class="bg-white p-4 rounded-lg shadow mb-6 border border-gray-100">
+        <form action="{{ route('tasks.index') }}" method="GET" class="grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
+            <!-- Preserve Status -->
+            @if (request('status'))
+                <input type="hidden" name="status" value="{{ request('status') }}">
+            @endif
+
+            <div>
+                <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Keyword</label>
+                <input type="text" name="keyword" value="{{ request('keyword') }}" placeholder="Search..."
+                    class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm p-2 border">
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Assignee</label>
+                <select name="assignee_id"
+                    class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm p-2 border">
+                    <option value="">All Users</option>
+                    @foreach ($users as $user)
+                        <option value="{{ $user->id }}" {{ request('assignee_id') == $user->id ? 'selected' : '' }}>
+                            {{ $user->name }}
+                        </option>
+                    @endforeach
+                </select>
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Tag</label>
+                <select name="tag_id"
+                    class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm p-2 border">
+                    <option value="">All Tags</option>
+                    @foreach ($tags as $tag)
+                        <option value="{{ $tag->id }}" {{ request('tag_id') == $tag->id ? 'selected' : '' }}>
+                            {{ $tag->name }}
+                        </option>
+                    @endforeach
+                </select>
+            </div>
+
+            <div class="md:col-span-2 flex gap-2">
+                <div class="flex-grow">
+                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Due Date</label>
+                    <div class="flex gap-2">
+                        <input type="date" name="date_from" value="{{ request('date_from') }}"
+                            class="w-full rounded-md border-gray-300 p-2 border text-sm" placeholder="From">
+                        <input type="date" name="date_to" value="{{ request('date_to') }}"
+                            class="w-full rounded-md border-gray-300 p-2 border text-sm" placeholder="To">
+                    </div>
+                </div>
+                <div class="flex items-end">
+                    <button type="submit"
+                        class="bg-indigo-600 text-white px-4 py-2 rounded shadow hover:bg-indigo-700 h-9 flex items-center">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                        </svg>
+                    </button>
+                    @if (request()->anyFilled(['keyword', 'assignee_id', 'tag_id', 'date_from', 'date_to']))
+                        <a href="{{ route('tasks.index', ['status' => request('status')]) }}"
+                            class="ml-2 text-gray-500 hover:text-gray-700 text-sm flex items-center h-9">Clear</a>
+                    @endif
+                </div>
+            </div>
+        </form>
+    </div>
+
     <div class="mb-6 border-b border-gray-200">
         <nav class="-mb-px flex space-x-8" aria-label="Tabs">
             @php
                 $currentStatus = request('status', 'default');
-                // Maps query param to a human readable label. 'default' implies todo+in_progress
+                $params = request()->except('status'); // Keep other filters
             @endphp
 
-            <a href="{{ route('tasks.index', ['status' => 'all']) }}"
+            <a href="{{ route('tasks.index', array_merge($params, ['status' => 'all'])) }}"
                 class="@if ($currentStatus == 'all') border-indigo-500 text-indigo-600 @else border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 @endif whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
                 All
             </a>
 
-            <a href="{{ route('tasks.index', ['status' => 'todo']) }}"
+            <a href="{{ route('tasks.index', array_merge($params, ['status' => 'todo'])) }}"
                 class="@if ($currentStatus == 'todo') border-indigo-500 text-indigo-600 @else border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 @endif whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
                 To Do
             </a>
 
-            <a href="{{ route('tasks.index', ['status' => 'in_progress']) }}"
+            <a href="{{ route('tasks.index', array_merge($params, ['status' => 'in_progress'])) }}"
                 class="@if ($currentStatus == 'in_progress') border-indigo-500 text-indigo-600 @else border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 @endif whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
                 In Progress
             </a>
 
-            <a href="{{ route('tasks.index', ['status' => 'done']) }}"
+            <a href="{{ route('tasks.index', array_merge($params, ['status' => 'done'])) }}"
                 class="@if ($currentStatus == 'done') border-indigo-500 text-indigo-600 @else border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 @endif whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">
                 Done
             </a>

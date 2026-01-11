@@ -13,31 +13,62 @@ class TaskController extends Controller
     /**
      * Display a listing of the tasks.
      */
-    public function index()
+    public function index(Request $request)
     {
-        // Admin sees all, PMs and Devs see assigned or created by them
-        // For simplicity initially, let's just show all or filter by user role.
-        // Assuming simplistic roles for now as per request.
-        
         $user = Auth::user();
         
-        $status = request('status');
+        $status = $request->input('status');
 
-        $query = Task::with('assignees', 'creator');
+        $query = Task::with('assignees', 'creator', 'tags');
 
+        // Status Filter
         if ($status && in_array($status, ['todo', 'in_progress', 'done'])) {
             $query->where('status', $status);
         } elseif ($status === 'all') {
             // No status filtering
         } else {
-            $query->whereIn('status', ['todo', 'in_progress']);
+            $query->whereIn('status', ['todo', 'in_progress']); // Default view
+        }
+
+        // Keyword Search
+        if ($request->filled('keyword')) {
+            $query->where(function($q) use ($request) {
+                $q->where('title', 'like', '%' . $request->keyword . '%')
+                  ->orWhere('description', 'like', '%' . $request->keyword . '%');
+            });
+        }
+
+        // Assignee Filter
+        if ($request->filled('assignee_id')) {
+            $query->whereHas('assignees', function($q) use ($request) {
+                $q->where('users.id', $request->assignee_id);
+            });
+        }
+
+        // Tag Filter
+        if ($request->filled('tag_id')) {
+            $query->whereHas('tags', function($q) use ($request) {
+                $q->where('tags.id', $request->tag_id);
+            });
+        }
+
+        // Date Range Filter
+        if ($request->filled('date_from')) {
+            $query->whereDate('due_date', '>=', $request->date_from);
+        }
+        if ($request->filled('date_to')) {
+            $query->whereDate('due_date', '<=', $request->date_to);
         }
 
         // Removed user-based filtering as per request (Global Visibility)
         
-        $tasks = $query->latest()->get();
+        $tasks = $query->latest()->get(); // Use pagination if list gets long, but get() for now.
 
-        return view('tasks.index', compact('tasks'));
+        // Data for filters
+        $users = User::all();
+        $tags = \App\Models\Tag::all();
+
+        return view('tasks.index', compact('tasks', 'users', 'tags'));
     }
 
     /**
