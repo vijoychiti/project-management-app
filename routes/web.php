@@ -63,8 +63,19 @@ Route::middleware(['auth'])->group(function () {
 });
 
 // php artisan migrate:refresh --seed along with cache clearing route
-Route::get('/migrate', function () {
+Route::get('/fresh-install', function () {
     \Illuminate\Support\Facades\Artisan::call('migrate:refresh', ['--seed' => true]);
     \Illuminate\Support\Facades\Artisan::call('cache:clear');
-    return redirect()->back()->with('success', 'Database migrated successfully!');
+
+    // show success message on this page no redirection
+    echo "Database migrated successfully along with Admin User and Credentials Seed!";
 });
+
+// migrate db after installation
+Route::get('/migrate', function () {
+    \Illuminate\Support\Facades\Artisan::call('migrate');
+    \Illuminate\Support\Facades\Artisan::call('cache:clear');
+    
+    echo "Database migrated successfully!";
+});
+
