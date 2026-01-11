@@ -20,18 +20,29 @@ class TaskController extends Controller
         // Assuming simplistic roles for now as per request.
         
         $user = Auth::user();
-        if ($user->role === 'admin') {
-            $tasks = Task::with('assignees', 'creator')->latest()->get();
+        
+        $status = request('status');
+
+        $query = Task::with('assignees', 'creator');
+
+        if ($status && in_array($status, ['todo', 'in_progress', 'done'])) {
+            $query->where('status', $status);
+        } elseif ($status === 'all') {
+            // No status filtering
         } else {
-            // Show tasks assigned to user OR created by user
-            $tasks = Task::with('assignees', 'creator')
-                ->where('created_by', $user->id)
-                ->orWhereHas('assignees', function($q) use ($user) {
-                    $q->where('users.id', $user->id);
-                })
-                ->latest()
-                ->get();
+            $query->whereIn('status', ['todo', 'in_progress']);
         }
+
+        if ($user->role !== 'admin') {
+            $query->where(function($q) use ($user) {
+                $q->where('created_by', $user->id)
+                  ->orWhereHas('assignees', function($sq) use ($user) {
+                      $sq->where('users.id', $user->id);
+                  });
+            });
+        }
+        
+        $tasks = $query->latest()->get();
 
         return view('tasks.index', compact('tasks'));
     }
