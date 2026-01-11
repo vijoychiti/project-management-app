@@ -57,6 +57,7 @@ Route::middleware(['auth'])->group(function () {
     Route::post('credentials/bulk-delete', [App\Http\Controllers\CredentialController::class, 'bulkDestroy'])->name('credentials.bulkDestroy');
     
     // Tag Routes
+    Route::post('tags', [App\Http\Controllers\TagController::class, 'store'])->name('tags.store');
     Route::post('tasks/{task}/tags', [TaskController::class, 'attachTag'])->name('tasks.tags.attach');
     Route::delete('tasks/{task}/tags/{tag}', [TaskController::class, 'detachTag'])->name('tasks.tags.detach');
 });

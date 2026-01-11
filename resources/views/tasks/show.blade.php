@@ -265,6 +265,19 @@
                         Add
                     </button>
                 </form>
+
+                <div class="mt-4 border-t border-gray-100 pt-4">
+                    <p class="text-xs text-gray-500 mb-2">Create New Tag</p>
+                    <form action="{{ route('tags.store') }}" method="POST" class="flex gap-2">
+                        @csrf
+                        <input type="text" name="name" placeholder="Tag Name" required
+                            class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-1.5 border text-xs">
+                        <input type="color" name="color" value="#6B7280"
+                            class="h-8 w-8 rounded cursor-pointer border border-gray-300 p-0.5">
+                        <button type="submit"
+                            class="bg-gray-800 text-white px-3 py-1.5 rounded text-xs hover:bg-gray-700">Create</button>
+                    </form>
+                </div>
             </div>
 
             <!-- Time Tracking -->

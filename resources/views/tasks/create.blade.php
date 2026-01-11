@@ -42,6 +42,21 @@
             </div>
 
             <div class="mb-4">
+                <label class="block text-gray-700 text-sm font-bold mb-2">Tags</label>
+                <div class="flex flex-wrap gap-2">
+                    @foreach ($tags as $tag)
+                        <label class="inline-flex items-center cursor-pointer">
+                            <input type="checkbox" name="tags[]" value="{{ $tag->id }}"
+                                class="form-checkbox h-4 w-4 text-indigo-600 rounded">
+                            <span
+                                class="ml-2 text-sm text-gray-700 bg-gray-100 px-2 py-1 rounded-full text-xs font-semibold"
+                                style="border-left: 3px solid {{ $tag->color }}">{{ $tag->name }}</span>
+                        </label>
+                    @endforeach
+                </div>
+            </div>
+
+            <div class="mb-4">
                 <label for="due_date" class="block text-gray-700 text-sm font-bold mb-2">Due Date</label>
                 <input type="date" name="due_date" id="due_date"
                     class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">

@@ -33,14 +33,7 @@ class TaskController extends Controller
             $query->whereIn('status', ['todo', 'in_progress']);
         }
 
-        if ($user->role !== 'admin') {
-            $query->where(function($q) use ($user) {
-                $q->where('created_by', $user->id)
-                  ->orWhereHas('assignees', function($sq) use ($user) {
-                      $sq->where('users.id', $user->id);
-                  });
-            });
-        }
+        // Removed user-based filtering as per request (Global Visibility)
         
         $tasks = $query->latest()->get();
 
@@ -53,7 +46,8 @@ class TaskController extends Controller
     public function create()
     {
         $users = User::whereIn('role', ['project_manager', 'developer'])->get();
-        return view('tasks.create', compact('users'));
+        $tags = \App\Models\Tag::all();
+        return view('tasks.create', compact('users', 'tags'));
     }
 
     /**
@@ -69,6 +63,8 @@ class TaskController extends Controller
             'due_date' => ['nullable', 'date'],
             'assignees' => ['required', 'array'],
             'assignees.*' => ['exists:users,id'],
+            'tags' => ['nullable', 'array'],
+            'tags.*' => ['exists:tags,id'],
         ]);
 
         $task = Task::create([
@@ -82,6 +78,10 @@ class TaskController extends Controller
         ]);
 
         $task->assignees()->sync($validated['assignees']);
+
+        if (!empty($validated['tags'])) {
+            $task->tags()->sync($validated['tags']);
+        }
 
         \App\Services\LogActivity::record('create_task', "Created task: {$task->title}", $task);
 
@@ -103,7 +103,7 @@ class TaskController extends Controller
     public function kanban(Request $request)
     {
         $user = Auth::user();
-        $query = Task::query()->with(['assignees', 'creator', 'tags']); // Eager load tags
+        $query = Task::query()->with(['assignees', 'creator', 'tags']);
 
         if ($request->has('user_id')) {
             $query->whereHas('assignees', function ($q) use ($request) {
@@ -111,14 +111,7 @@ class TaskController extends Controller
             });
         }
 
-        if ($user->role !== 'admin') {
-            $query->where(function($q) use ($user) {
-                $q->where('created_by', $user->id)
-                  ->orWhereHas('assignees', function($sq) use ($user) {
-                      $sq->where('users.id', $user->id);
-                  });
-            });
-        }
+        // Removed user-based filtering (Global Visibility)
         
         $allTasks = $query->get();
         
