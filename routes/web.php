@@ -66,6 +66,8 @@ Route::middleware(['auth'])->group(function () {
 Route::get('/fresh-install', function () {
     \Illuminate\Support\Facades\Artisan::call('migrate:refresh', ['--seed' => true]);
     \Illuminate\Support\Facades\Artisan::call('cache:clear');
+    \Illuminate\Support\Facades\Artisan::call('config:clear');
+    \Illuminate\Support\Facades\Artisan::call('view:clear');
 
     // show success message on this page no redirection
     echo "Database migrated successfully along with Admin User and Credentials Seed!";
@@ -75,7 +77,8 @@ Route::get('/fresh-install', function () {
 Route::get('/migrate', function () {
     \Illuminate\Support\Facades\Artisan::call('migrate');
     \Illuminate\Support\Facades\Artisan::call('cache:clear');
-    
+    \Illuminate\Support\Facades\Artisan::call('config:clear');
+    \Illuminate\Support\Facades\Artisan::call('view:clear');
     echo "Database migrated successfully!";
 });
 
