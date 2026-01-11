@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Models\Attachment;
 use App\Models\Comment;
+use App\Models\Tag;
 use App\Models\TaskUpdate;
 use App\Models\TimeEntry;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -51,5 +52,10 @@ class Task extends Model
     public function timeEntries()
     {
         return $this->hasMany(TimeEntry::class)->latest();
+    }
+
+    public function tags()
+    {
+        return $this->belongsToMany(Tag::class, 'task_tag');
     }
 }

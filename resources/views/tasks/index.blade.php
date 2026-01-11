@@ -67,7 +67,7 @@
                         </div>
                     </div>
 
-                    <div class="flex gap-2 mb-2">
+                    <div class="flex flex-wrap gap-2 mb-2">
                         <span
                             class="px-2 py-0.5 text-xs rounded border 
                             @if ($task->priority == 'urgent') border-red-500 text-red-700 bg-red-50
@@ -79,6 +79,12 @@
                         <span class="px-2 py-0.5 text-xs rounded border border-gray-200 bg-white text-gray-600">
                             {{ ucfirst($task->type) }}
                         </span>
+                        @foreach ($task->tags as $tag)
+                            <span class="px-2 py-0.5 text-xs rounded-full text-white"
+                                style="background-color: {{ $tag->color }}">
+                                {{ $tag->name }}
+                            </span>
+                        @endforeach
                     </div>
 
                     <h3 class="text-lg font-bold text-gray-900 mb-2 truncate">{{ $task->title }}</h3>

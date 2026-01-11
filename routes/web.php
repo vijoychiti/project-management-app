@@ -55,6 +55,10 @@ Route::middleware(['auth'])->group(function () {
     Route::post('credentials/share', [App\Http\Controllers\CredentialController::class, 'share'])->name('credentials.share'); // Bulk share
     Route::delete('credentials/{credential}', [App\Http\Controllers\CredentialController::class, 'destroy'])->name('credentials.destroy');
     Route::post('credentials/bulk-delete', [App\Http\Controllers\CredentialController::class, 'bulkDestroy'])->name('credentials.bulkDestroy');
+    
+    // Tag Routes
+    Route::post('tasks/{task}/tags', [TaskController::class, 'attachTag'])->name('tasks.tags.attach');
+    Route::delete('tasks/{task}/tags/{tag}', [TaskController::class, 'detachTag'])->name('tasks.tags.detach');
 });
 
 // php artisan migrate:refresh --seed along with cache clearing route

@@ -98,6 +98,57 @@ class TaskController extends Controller
     }
 
     /**
+     * Display a Kanban board of tasks.
+     */
+    public function kanban(Request $request)
+    {
+        $user = Auth::user();
+        $query = Task::query()->with(['assignees', 'creator', 'tags']); // Eager load tags
+
+        if ($request->has('user_id')) {
+            $query->whereHas('assignees', function ($q) use ($request) {
+                $q->where('users.id', $request->user_id);
+            });
+        }
+
+        if ($user->role !== 'admin') {
+            $query->where(function($q) use ($user) {
+                $q->where('created_by', $user->id)
+                  ->orWhereHas('assignees', function($sq) use ($user) {
+                      $sq->where('users.id', $user->id);
+                  });
+            });
+        }
+        
+        $allTasks = $query->get();
+        
+        $todoTasks = $allTasks->where('status', 'todo');
+        $inProgressTasks = $allTasks->where('status', 'in_progress');
+        $doneTasks = $allTasks->where('status', 'done');
+
+        return view('tasks.kanban', compact('todoTasks', 'inProgressTasks', 'doneTasks'));
+    }
+
+    public function attachTag(Request $request, Task $task)
+    {
+        $request->validate(['tag_id' => 'required|exists:tags,id']);
+        $task->tags()->syncWithoutDetaching([$request->tag_id]);
+        
+        \App\Services\LogActivity::record('update_task', "Added tag to task: {$task->title}", $task);
+        
+        return back()->with('success', 'Tag added.');
+    }
+
+    public function detachTag(Task $task, \App\Models\Tag $tag)
+    {
+        $task->tags()->detach($tag->id);
+        
+        \App\Services\LogActivity::record('update_task', "Removed tag from task: {$task->title}", $task);
+        
+        return back()->with('success', 'Tag removed.');
+    }
+
+    /**
      * Update the task status.
      */
     public function updateStatus(Request $request, Task $task)
@@ -121,33 +172,6 @@ class TaskController extends Controller
         return back()->with('success', 'Task status updated.');
     }
 
-    /**
-     * Display a Kanban board of tasks.
-     */
-    public function kanban()
-    {
-        $user = Auth::user();
-
-        $query = Task::with('assignees', 'creator');
-
-        if ($user->role !== 'admin') {
-            $query->where(function($q) use ($user) {
-                $q->where('created_by', $user->id)
-                  ->orWhereHas('assignees', function($sq) use ($user) {
-                      $sq->where('users.id', $user->id);
-                  });
-            });
-        }
-        
-        $tasks = $query->latest()->get();
-        
-        // Group tasks by status for the view
-        $todoTasks = $tasks->where('status', 'todo');
-        $inProgressTasks = $tasks->where('status', 'in_progress');
-        $doneTasks = $tasks->where('status', 'done');
-
-        return view('tasks.kanban', compact('todoTasks', 'inProgressTasks', 'doneTasks'));
-    }
     public function destroy(Task $task)
     {
         $user = Auth::user();

@@ -229,6 +229,44 @@
                 </ul>
             </div>
 
+            <!-- Tags -->
+            <div class="bg-white shadow rounded-lg p-6">
+                <h3 class="text-lg font-bold text-gray-900 mb-4">Tags</h3>
+                <div class="flex flex-wrap gap-2 mb-4">
+                    @forelse($task->tags as $tag)
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium text-white"
+                            style="background-color: {{ $tag->color }}">
+                            {{ $tag->name }}
+                            <form action="{{ route('tasks.tags.detach', [$task, $tag]) }}" method="POST"
+                                class="ml-1">
+                                @csrf @method('DELETE')
+                                <button type="submit" class="text-white hover:text-gray-200 focus:outline-none">
+                                    &times;
+                                </button>
+                            </form>
+                        </span>
+                    @empty
+                        <span class="text-gray-500 text-sm italic">No tags</span>
+                    @endforelse
+                </div>
+
+                <form action="{{ route('tasks.tags.attach', $task) }}" method="POST"
+                    class="flex items-center space-x-2">
+                    @csrf
+                    <select name="tag_id"
+                        class="flex-grow rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2 border text-sm">
+                        <option value="" disabled selected>Add a tag...</option>
+                        @foreach (App\Models\Tag::whereNotIn('id', $task->tags->pluck('id'))->get() as $avalTag)
+                            <option value="{{ $avalTag->id }}">{{ $avalTag->name }}</option>
+                        @endforeach
+                    </select>
+                    <button type="submit"
+                        class="bg-indigo-600 text-white px-3 py-2 rounded shadow hover:bg-indigo-700 transition text-sm">
+                        Add
+                    </button>
+                </form>
+            </div>
+
             <!-- Time Tracking -->
             <div class="bg-white shadow rounded-lg p-6">
                 <h3 class="text-lg font-bold text-gray-900 mb-4">Time Tracking</h3>

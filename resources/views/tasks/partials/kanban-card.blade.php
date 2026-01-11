@@ -16,6 +16,15 @@
             </span>
         @endif
     </div>
+
+    <div class="flex flex-wrap gap-1 mb-2">
+        @foreach ($task->tags as $tag)
+            <span class="text-[10px] px-1.5 py-0.5 rounded-full text-white" style="background-color: {{ $tag->color }}">
+                {{ $tag->name }}
+            </span>
+        @endforeach
+    </div>
+
     <a href="{{ route('tasks.show', $task) }}" class="font-bold text-gray-800 hover:text-indigo-600 block mb-1">
         {{ $task->title }}
     </a>
