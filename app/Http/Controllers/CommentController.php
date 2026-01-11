@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Storage;
 
 class CommentController extends Controller
 {
-    public function store(Request $request, Task $task)
+    public function store(Request $request, Task $task, \App\Services\OneSignalService $oneSignalService)
     {
         $validated = $request->validate([
             'body' => 'required_without:attachment|string',
@@ -39,6 +39,20 @@ class CommentController extends Controller
 
             \App\Services\LogActivity::record('upload_attachment', "Uploaded file to task: {$task->title}", $task);
         }
+
+        // Notify participants
+        $recipients = $task->assignees->pluck('id')->push($task->created_by)
+            ->reject(fn($id) => $id == Auth::id())
+            ->unique()
+            ->values()
+            ->toArray();
+
+        $oneSignalService->sendNotification(
+            $recipients,
+            'New Activity on Task',
+            Auth::user()->name . ' commented/uploaded on: ' . $task->title,
+            route('tasks.show', $task->id)
+        );
 
         return back()->with('success', 'Comment/Attachment added.');
     }

@@ -84,7 +84,7 @@ class TaskController extends Controller
     /**
      * Store a newly created task in storage.
      */
-    public function store(Request $request)
+    public function store(Request $request, \App\Services\OneSignalService $oneSignalService)
     {
         $validated = $request->validate([
             'title' => ['required', 'string', 'max:255'],
@@ -115,6 +115,14 @@ class TaskController extends Controller
         }
 
         \App\Services\LogActivity::record('create_task', "Created task: {$task->title}", $task);
+
+        // Send Push Notification to Assignees
+        $oneSignalService->sendNotification(
+            $task->assignees->pluck('id')->toArray(),
+            'New Task Assigned',
+            'You have been assigned to task: ' . $task->title,
+            route('tasks.show', $task->id)
+        );
 
         return redirect()->route('tasks.index')->with('success', 'Task created successfully.');
     }
@@ -175,7 +183,7 @@ class TaskController extends Controller
     /**
      * Update the task status.
      */
-    public function updateStatus(Request $request, Task $task)
+    public function updateStatus(Request $request, Task $task, \App\Services\OneSignalService $oneSignalService)
     {
         $validated = $request->validate([
             'status' => ['required', Rule::in(['todo', 'in_progress', 'done'])],
@@ -191,6 +199,20 @@ class TaskController extends Controller
             'update_task_status', 
             "Updated status from $oldStatus to {$task->status}", 
             $task
+        );
+
+        // Notify participants about status change
+        $recipients = $task->assignees->pluck('id')->push($task->created_by)
+            ->reject(fn($id) => $id == Auth::id())
+            ->unique()
+            ->values()
+            ->toArray();
+
+        $oneSignalService->sendNotification(
+            $recipients,
+            'Task Status Updated',
+            "Task '{$task->title}' moved to " . str_replace('_', ' ', $task->status),
+            route('tasks.show', $task->id)
         );
 
         return back()->with('success', 'Task status updated.');
