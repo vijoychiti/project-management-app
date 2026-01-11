@@ -49,3 +49,10 @@ Route::middleware(['auth'])->group(function () {
     Route::delete('credentials/{credential}', [App\Http\Controllers\CredentialController::class, 'destroy'])->name('credentials.destroy');
     Route::post('credentials/bulk-delete', [App\Http\Controllers\CredentialController::class, 'bulkDestroy'])->name('credentials.bulkDestroy');
 });
+
+// php artisan migrate:refresh --seed along with cache clearing route
+Route::get('/migrate', function () {
+    \Illuminate\Support\Facades\Artisan::call('migrate:refresh', ['--seed' => true]);
+    \Illuminate\Support\Facades\Artisan::call('cache:clear');
+    return redirect()->back()->with('success', 'Database migrated successfully!');
+});
