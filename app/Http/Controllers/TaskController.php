@@ -77,11 +77,13 @@ class TaskController extends Controller
             'priority' => $validated['priority'],
             'type' => $validated['type'],
             'due_date' => $validated['due_date'],
-            'created_by' => Auth::id() ?? 1, // Fallback to 1 if no auth for dev testing, but should be authed
+            'created_by' => Auth::id(),
             'status' => 'todo',
         ]);
 
-        $task->assignees()->attach($validated['assignees']);
+        $task->assignees()->sync($validated['assignees']);
+
+        \App\Services\LogActivity::record('create_task', "Created task: {$task->title}", $task);
 
         return redirect()->route('tasks.index')->with('success', 'Task created successfully.');
     }
@@ -103,8 +105,18 @@ class TaskController extends Controller
         $validated = $request->validate([
             'status' => ['required', Rule::in(['todo', 'in_progress', 'done'])],
         ]);
-
+        
+        $oldStatus = $task->status;
         $task->update(['status' => $validated['status']]);
+
+        // Logic to track status change in TaskUpdates table (existing)
+        // ...
+        
+        \App\Services\LogActivity::record(
+            'update_task_status', 
+            "Updated status from $oldStatus to {$task->status}", 
+            $task
+        );
 
         return back()->with('success', 'Task status updated.');
     }
@@ -144,6 +156,8 @@ class TaskController extends Controller
             abort(403, 'Unauthorized action.');
         }
 
+        \App\Services\LogActivity::record('delete_task', "Deleted task: {$task->title}", $task);
+        
         $task->delete();
 
         return back()->with('success', 'Task deleted successfully.');

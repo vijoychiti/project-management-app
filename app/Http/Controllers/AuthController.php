@@ -21,9 +21,10 @@ class AuthController extends Controller
 
         if (Auth::attempt($credentials)) {
             $request->session()->regenerate();
+            
+            \App\Services\LogActivity::record('login', 'User logged in');
 
-            // Redirect based on role? Or just to tasks
-            return redirect()->intended(route('tasks.index'));
+            return redirect()->intended('/tasks');
         }
 
         return back()->withErrors([
@@ -33,10 +34,12 @@ class AuthController extends Controller
 
     public function logout(Request $request)
     {
+        \App\Services\LogActivity::record('logout', 'User logged out');
+        
         Auth::logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return redirect()->route('login');
+        return redirect('/login');
     }
 }

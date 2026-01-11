@@ -45,10 +45,16 @@ class CredentialController extends Controller
             'description' => 'nullable|string',
         ]);
 
-        Credential::create([
+        $credential = Credential::create([
             ...$validated,
             'created_by' => Auth::id(),
         ]);
+
+        \App\Services\LogActivity::record(
+            'create_credential', 
+            "Created credential for {$credential->project_name} - {$credential->service_name}", 
+            $credential
+        );
 
         return back()->with('success', 'Credential added successfully.');
     }
@@ -74,6 +80,12 @@ class CredentialController extends Controller
 
         foreach ($credentials as $credential) {
             $credential->accessList()->sync($users);
+            
+            \App\Services\LogActivity::record(
+                'share_credential', 
+                "Updated sharing settings for credential {$credential->id}", 
+                $credential
+            );
         }
 
         return back()->with('success', 'Sharing settings updated.');
@@ -88,6 +100,12 @@ class CredentialController extends Controller
         if ($user->role !== 'admin' && $credential->created_by !== $user->id) {
             abort(403);
         }
+
+        \App\Services\LogActivity::record(
+            'delete_credential', 
+            "Deleted credential for {$credential->project_name}", 
+            $credential
+        );
 
         $credential->delete();
 
