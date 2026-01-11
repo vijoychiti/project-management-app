@@ -41,6 +41,9 @@ Route::middleware(['auth'])->group(function () {
 
     // Task Update Routes
     Route::post('tasks/{task}/updates', [TaskUpdateController::class, 'store'])->name('tasks.updates.store');
+    
+    // Comments & Attachments
+    Route::post('tasks/{task}/comments', [App\Http\Controllers\CommentController::class, 'store'])->name('tasks.comments.store');
 
     // Credential Routes
     Route::get('credentials', [App\Http\Controllers\CredentialController::class, 'index'])->name('credentials.index');

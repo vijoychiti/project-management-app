@@ -2,6 +2,10 @@
 
 namespace App\Models;
 
+use App\Models\Attachment;
+use App\Models\Comment;
+use App\Models\TaskUpdate;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Task extends Model
@@ -19,11 +23,22 @@ class Task extends Model
 
     public function assignees()
     {
-        return $this->belongsToMany(User::class, 'task_assigned_tos', 'task_id', 'user_id');
+        // Using 'task_assigned_tos' as defined in migration, but standard convention might be considered
+        return $this->belongsToMany(User::class, 'task_assigned_tos');
+    }
+
+    public function comments()
+    {
+        return $this->hasMany(Comment::class)->latest();
+    }
+
+    public function attachments()
+    {
+        return $this->hasMany(Attachment::class)->latest();
     }
 
     public function updates()
     {
-        return $this->hasMany(TaskUpdates::class, 'task_id');
+        return $this->hasMany(TaskUpdates::class)->latest();
     }
 }

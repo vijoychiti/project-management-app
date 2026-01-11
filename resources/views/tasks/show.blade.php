@@ -82,51 +82,109 @@
             </div>
 
             <!-- Updates Section -->
-            <div class="bg-white shadow rounded-lg p-6">
-                <h3 class="text-lg font-bold text-gray-900 mb-4">Updates & Activity</h3>
+            <!-- Discussion & Activity -->
+            <div class="space-y-6">
+                <!-- Comments & Attachments -->
+                <div class="bg-white shadow rounded-lg p-6">
+                    <h3 class="text-lg font-bold text-gray-900 mb-4">Discussion & Attachments</h3>
 
-                <div class="space-y-6 mb-8">
-                    @forelse($task->updates as $update)
-                        <div class="flex space-x-3">
-                            <div class="flex-shrink-0">
-                                <div
-                                    class="h-10 w-10 rounded-full bg-gray-300 flex items-center justify-center font-bold text-gray-600">
-                                    {{ substr($update->user->name ?? 'U', 0, 2) }}
+                    <div class="space-y-6 mb-8">
+                        @php
+                            $combined = $task->comments->concat($task->attachments)->sortByDesc('created_at');
+                        @endphp
+
+                        @forelse($combined as $item)
+                            <div class="flex space-x-3">
+                                <div class="flex-shrink-0">
+                                    <div
+                                        class="h-10 w-10 rounded-full bg-gray-300 flex items-center justify-center font-bold text-gray-600">
+                                        {{ substr($item->user->name ?? 'U', 0, 2) }}
+                                    </div>
+                                </div>
+                                <div class="flex-grow">
+                                    <div class="text-sm">
+                                        <span
+                                            class="font-medium text-gray-900">{{ $item->user->name ?? 'Unknown User' }}</span>
+                                        <span class="text-gray-500">
+                                            @if ($item instanceof App\Models\Comment)
+                                                commented
+                                            @else
+                                                uploaded a file
+                                            @endif
+                                        </span>
+                                        <span class="text-gray-400 mx-1">&middot;</span>
+                                        <span class="text-gray-400">{{ $item->created_at->diffForHumans() }}</span>
+                                    </div>
+                                    <div class="mt-1 text-gray-700 bg-gray-50 p-3 rounded-lg border border-gray-100">
+                                        @if ($item instanceof App\Models\Comment)
+                                            {{ $item->body }}
+                                        @else
+                                            <div class="flex items-center space-x-2">
+                                                <svg class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24"
+                                                    stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                        d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
+                                                </svg>
+                                                <a href="{{ Storage::url($item->file_path) }}" target="_blank"
+                                                    class="text-indigo-600 hover:text-indigo-800 underline">
+                                                    {{ $item->original_name }}
+                                                </a>
+                                            </div>
+                                        @endif
+                                    </div>
                                 </div>
                             </div>
-                            <div class="flex-grow">
-                                <div class="text-sm">
-                                    <span
-                                        class="font-medium text-gray-900">{{ $update->user->name ?? 'Unknown User' }}</span>
-                                    <span class="text-gray-500">posted an update</span>
-                                    <span class="text-gray-400 mx-1">&middot;</span>
-                                    <span class="text-gray-400">{{ $update->created_at->diffForHumans() }}</span>
-                                </div>
-                                <div class="mt-1 text-gray-700 bg-gray-50 p-3 rounded-lg border border-gray-100">
-                                    {{ $update->update }}
-                                </div>
-                            </div>
+                        @empty
+                            <p class="text-gray-500 italic text-center py-4">No comments or files yet.</p>
+                        @endforelse
+                    </div>
+
+                    <!-- Add Comment/File Form -->
+                    <form action="{{ route('tasks.comments.store', $task) }}" method="POST" enctype="multipart/form-data">
+                        @csrf
+                        <div class="mb-3">
+                            <label for="body" class="sr-only">Comment</label>
+                            <textarea name="body" id="body" rows="3"
+                                class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-3 border"
+                                placeholder="Add a comment..."></textarea>
                         </div>
-                    @empty
-                        <p class="text-gray-500 italic text-center py-4">No updates yet on this task.</p>
-                    @endforelse
+                        <div class="flex justify-between items-center">
+                            <div class="flex items-center">
+                                <label for="attachment"
+                                    class="cursor-pointer text-gray-500 hover:text-indigo-600 flex items-center space-x-1">
+                                    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
+                                    </svg>
+                                    <span class="text-sm">Attach File</span>
+                                </label>
+                                <input type="file" name="attachment" id="attachment" class="hidden"
+                                    onchange="document.getElementById('file-name').textContent = this.files[0].name">
+                                <span id="file-name" class="ml-2 text-xs text-gray-500"></span>
+                            </div>
+                            <button type="submit"
+                                class="bg-indigo-600 text-white px-4 py-2 rounded shadow hover:bg-indigo-700 transition text-sm font-medium">
+                                Post
+                            </button>
+                        </div>
+                    </form>
                 </div>
 
-                <!-- Add Update Form -->
-                <form action="{{ route('tasks.updates.store', $task) }}" method="POST">
-                    @csrf
-                    <div class="mb-3">
-                        <label for="update" class="sr-only">New Update</label>
-                        <textarea name="update" id="update" rows="3"
-                            class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-3 border"
-                            placeholder="Provide an update on this task..." required></textarea>
+                <!-- Task Updates (Separated) -->
+                <div class="bg-gray-50 rounded-lg p-6 border border-gray-200">
+                    <h4 class="text-sm font-bold text-gray-700 mb-4 uppercase tracking-wide">System Updates</h4>
+                    <div class="space-y-4">
+                        @forelse($task->updates as $update)
+                            <div class="text-sm text-gray-600">
+                                <span class="font-medium text-gray-800">{{ $update->user->name ?? 'System' }}</span>
+                                {{ $update->update }}
+                                <span class="text-gray-400 text-xs ml-1">{{ $update->created_at->diffForHumans() }}</span>
+                            </div>
+                        @empty
+                            <p class="text-gray-400 italic text-xs">No system updates.</p>
+                        @endforelse
                     </div>
-                    <div class="flex justify-end">
-                        <button type="submit"
-                            class="bg-indigo-600 text-white px-4 py-2 rounded shadow hover:bg-indigo-700 transition text-sm font-medium">Post
-                            Update</button>
-                    </div>
-                </form>
+                </div>
             </div>
         </div>
 
