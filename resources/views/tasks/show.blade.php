@@ -141,9 +141,13 @@
                                 </div>
                                 <div>
                                     <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Attachments
-                                        (Mulitple)</label>
+                                        (Mulitple)
+                                        <small
+                                            class="text-xs text-gray-500">(.jpg,.jpeg,.png,.pdf,.doc,.docx,.txt,.xlsx,.xls,.csv)</small>
+                                    </label>
                                     <input type="file" name="attachments[]" multiple
-                                        class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
+                                        class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
+                                        accept=".jpg,.jpeg,.png,.pdf,.doc,.docx,.txt,.xlsx,.xls,.csv">
                                 </div>
                                 <div class="flex justify-end">
                                     <button type="button"
@@ -163,10 +167,19 @@
                         <div
                             class="border border-gray-200 rounded-lg p-3 hover:bg-gray-50 transition {{ $subTask->status == 'done' ? 'bg-green-50' : '' }}">
                             <div class="flex justify-between items-start">
-                                <div class="flex-grow">
+                                <div class="flex-grow min-w-0">
                                     <div class="flex items-center gap-2 mb-1">
-
-                                        @if (auth()->user()->id == $subTask->assigned_to || auth()->user()->role == 'admin')
+                                        @php
+                                            $isUpdateStatus = false;
+                                            if (auth()->user()->role == 'admin') {
+                                                $isUpdateStatus = true;
+                                            } else {
+                                                $isUpdateStatus = empty($subTask->assigned_to)
+                                                    ? true
+                                                    : auth()->user()->id == $subTask->assigned_to;
+                                            }
+                                        @endphp
+                                        @if ($isUpdateStatus)
                                             <form action="{{ route('subtasks.update', $subTask) }}" method="POST"
                                                 class="inline">
                                                 @csrf @method('PUT')
@@ -188,7 +201,7 @@
                                             </form>
                                         @endif
                                         <span
-                                            class="font-medium text-gray-900 {{ $subTask->status == 'done' ? 'line-through text-gray-500' : '' }}">
+                                            class="font-medium text-gray-900 max-w-full overflow-x-auto whitespace-nowrap {{ $subTask->status == 'done' ? 'line-through text-gray-500' : '' }}">
                                             {{ $subTask->title }}
                                         </span>
                                         <span
@@ -282,7 +295,7 @@
                                         {{ substr($item->user->name ?? 'U', 0, 2) }}
                                     </div>
                                 </div>
-                                <div class="flex-grow">
+                                <div class="flex-grow min-w-0">
                                     <div class="text-sm">
                                         <span
                                             class="font-medium text-gray-900">{{ $item->user->name ?? 'Unknown User' }}</span>
@@ -298,29 +311,31 @@
                                     </div>
 
                                     @if ($item instanceof App\Models\Comment)
-                                        <div class="mt-1 text-gray-700 bg-gray-50 p-3 rounded-lg border border-gray-100">
-                                            {{ $item->body }}</div>
+                                        <div
+                                            class="mt-1 text-gray-700 bg-gray-50 p-3 rounded-lg border border-gray-100 overflow-x-auto whitespace-nowrap max-w-full">
+                                            {{ $item->body }}
+                                        </div>
 
                                         @if ($item->attachments->isNotEmpty())
-                                            @foreach ($item->attachments as $attachment)
-                                                <div
-                                                    class="mt-1 ml-5 text-gray-700 bg-gray-50 p-1 rounded-lg border border-gray-100">
-                                                    <div class="flex items-center space-x-1">
-                                                        <svg class="h-5 w-5 text-gray-400" fill="none"
-                                                            viewBox="0 0 24 24" stroke="currentColor">
-                                                            <path stroke-linecap="round" stroke-linejoin="round"
-                                                                stroke-width="2"
-                                                                d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13">
-                                                            </path>
-                                                        </svg>
+                                            <div class="mt-2 ml-8">
+                                                <p class="text-xs font-semibold text-gray-500 mb-1">Attachments:</p>
+                                                <div class="flex flex-wrap gap-2">
+                                                    @foreach ($item->attachments as $attachment)
                                                         <a href="{{ Storage::url($attachment->file_path) }}"
                                                             target="_blank"
-                                                            class="text-indigo-600 hover:text-indigo-800 underline">
+                                                            class="text-xs text-indigo-600 hover:text-indigo-800 underline bg-indigo-50 px-2 py-1 rounded flex items-center gap-1">
+                                                            <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24"
+                                                                stroke="currentColor">
+                                                                <path stroke-linecap="round" stroke-linejoin="round"
+                                                                    stroke-width="2"
+                                                                    d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13">
+                                                                </path>
+                                                            </svg>
                                                             {{ $attachment->original_name }}
                                                         </a>
-                                                    </div>
+                                                    @endforeach
                                                 </div>
-                                            @endforeach
+                                            </div>
                                         @endif
                                     @elseif ($item instanceof App\Models\Attachment)
                                         <div class="mt-1 text-gray-700 bg-gray-50 p-3 rounded-lg border border-gray-100">
@@ -371,11 +386,12 @@
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                             d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
                                     </svg>
-                                    <span class="text-sm">Attach File</span>
+                                    <span class="text-sm">Attach File <small class="text-xs text-gray-500">(only
+                                            .jpg,.jpeg,.png,.pdf,.doc,.docx,.txt,.xlsx,.xls,.csv)</small></span>
                                 </label>
                                 <input type="file" name="attachment" id="attachment" class="hidden"
                                     onchange="document.getElementById('file-name').textContent = this.files[0].name"
-                                    accept=".png, .jpeg, .jpg, .webp, .pdf">
+                                    accept=".jpg,.jpeg,.png,.pdf,.doc,.docx,.txt,.xlsx,.xls,.csv">
                                 <span id="file-name" class="ml-2 text-xs text-gray-500"></span>
 
 
@@ -404,7 +420,9 @@
                         @forelse($combinedLogs as $log)
                             <div class="text-sm text-gray-600">
                                 <span class="font-medium text-gray-800">{{ $log->user->name ?? 'System' }}</span>
-                                {{ $log->description }}
+                                <span class="inline-block align-middle max-w-full overflow-x-auto whitespace-nowrap">
+                                    {{ $log->description }}
+                                </span>
                                 <span class="text-gray-400 text-xs ml-1">{{ $log->created_at->diffForHumans() }}</span>
                             </div>
                         @empty

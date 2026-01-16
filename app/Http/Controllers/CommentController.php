@@ -14,7 +14,7 @@ class CommentController extends Controller
     {
         $validated = $request->validate([
             'body' => 'required_without:attachment|string',
-            'attachment' => 'nullable|file|max:10240|extensions:jpg,jpeg,png,pdf,doc,docx', // 10MB max
+            'attachment' => 'nullable|file|max:10240|extensions:jpg,jpeg,png,pdf,doc,docx,txt,xlsx,xls,csv', // 10MB max
         ]);
 
         try {
@@ -30,7 +30,7 @@ class CommentController extends Controller
                         'user_id' => Auth::id(),
                         'body' => $validated['body'],
                     ]);
-                    
+
                     \App\Services\LogActivity::record('comment_task', "Commented on task: {$task->title}", $task);
 
                     $activity = 'commented';
@@ -39,7 +39,7 @@ class CommentController extends Controller
                 if ($request->hasFile('attachment')) {
                     $file = $request->file('attachment');
 
-                    $path = $file->storeAs('attachments' , $file->hashName(), [
+                    $path = $file->storeAs('attachments', $file->hashName(), [
                         'disk'          => config('filesystems.default'),
                         'visibility'    => 'public',
                     ]);
@@ -49,7 +49,7 @@ class CommentController extends Controller
                         'file_path' => $path,
                         'original_name' => $file->getClientOriginalName(),
                         'mime_type' => $file->getClientMimeType(),
-                        'attachable_type'=> $comment ? get_class($comment) : null,
+                        'attachable_type' => $comment ? get_class($comment) : null,
                         'attachable_id' => $comment ? $comment->id : null
                     ]);
 
@@ -77,7 +77,7 @@ class CommentController extends Controller
                 }
             });
 
-            return back()->with('success', ''. $activity . ' successfully.');
+            return back()->with('success', '' . $activity . ' successfully.');
         } catch (\Throwable $th) {
             Log::error('Task comment creation failed', [
                 'error' => $th->getMessage(),

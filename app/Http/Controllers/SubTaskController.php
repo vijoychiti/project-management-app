@@ -24,7 +24,7 @@ class SubTaskController extends Controller
             'priority' => ['required', Rule::in(['low', 'medium', 'high', 'urgent'])],
             'type' => ['required', Rule::in(['bug', 'feature', 'improvement'])],
             'assigned_to' => 'nullable|exists:users,id',
-            'attachments.*' => 'nullable|file|max:10240', // 10MB max per file
+            'attachments.*' => 'nullable|file|max:10240,accept:jpg,jpeg,png,pdf,doc,docx,txt,xlsx,xls,csv', // 10MB max per file
         ]);
 
         try {
